@@ -1,9 +1,35 @@
 
-const char k_const[4] = "ahoj";
-char k_init[4] = "kock";
-char k_zero[4] = {0};
+extern void main(void);
 
-void boot(void)
+extern unsigned int _rodata_end;
+extern unsigned int _start_data;
+extern unsigned int _end_data;
+extern unsigned int _start_bss;
+extern unsigned int _end_bss;
+
+_Noreturn void _loop(void)
 {
+	for(;;);
+}
+
+_Noreturn void _reset(void)
+{
+	unsigned int *src, *dst;
+
+	asm volatile ("cpsid i");
+
+	src = &_rodata_end;
+	dst = &_start_data;
+	while (dst < &_end_data) {
+		*dst++ = *src++;
+	}
+
+	dst = &_start_bss;
+	while (dst < &_end_bss) {
+		*dst++ = 0;
+	}
+
+	main();
+	_loop();
 }
 

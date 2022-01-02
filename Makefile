@@ -10,7 +10,10 @@ LINKERSCRIPT := ./kernel/platform/stm32f429_discovery/linkerscript.ld
 TARGET := stm32f429_discovery
 SRC += ./kernel/platform/stm32f429_discovery/head.o
 SRC += ./kernel/platform/stm32f429_discovery/boot.o
+CCFLAGS += -mthumb -mcpu=cortex-m4
 endif
+
+SRC += ./kernel/main.o
 
 # COMPILER CODE
 
@@ -23,13 +26,13 @@ all: $(SRC)
 	$(LD) $(SRC) -o $(TARGET).elf -T $(LINKERSCRIPT)
 	$(OBJCOPY) -O binary $(TARGET).elf $(TARGET).bin
 	xxd $(TARGET).bin
-	$(OBJDUMP) $(TARGET).elf -D
+	$(OBJDUMP) $(TARGET).elf -d
 
 %.o: %.c
-	$(CC) -c $< -o $@
+	$(CC) $(CCFLAGS) -c $< -o $@
 
 %.o: %.s
-	$(CC) -c $< -o $@
+	$(CC) $(CCFLAGS) -c $< -o $@
 
 clean:
 	$(RM) $(SRC) $(TARGET).elf $(TARGET).elf $(TARGET).bin
