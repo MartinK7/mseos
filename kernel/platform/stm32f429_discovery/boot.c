@@ -7,6 +7,9 @@ extern unsigned int _end_data;
 extern unsigned int _start_bss;
 extern unsigned int _end_bss;
 
+unsigned int __attribute__((section(".stack"))) _estack[64*1024/sizeof(int)];
+unsigned int __attribute__((section(".heap"))) _heap[8*1024*1024/sizeof(int)];
+
 _Noreturn void _loop(void)
 {
 	for(;;);

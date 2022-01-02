@@ -1,18 +1,18 @@
 	.section .ivt
-	.word     _loop        /* _estack */
-	.word     _reset      /* Reset_Handler */
+	.word     _estack      /* _estack */
+	.word     _reset       /* Reset_Handler */
 	.word     _loop        /* NMI_Handler */
 	.word     _loop        /* HardFault_Handler */
 	.word     _loop        /* MemManage_Handler */
 	.word     _loop        /* BusFault_Handler */
 	.word     _loop        /* UsageFault_Handler */
-	.word     _loop        /* 0 */
-	.word     _loop        /* 0 */
-	.word     _loop        /* 0 */
-	.word     _loop        /* 0 */
+	.word     0            /* 0 */
+	.word     0            /* 0 */
+	.word     0            /* 0 */
+	.word     0            /* 0 */
 	.word     _loop        /* SVC_Handler */
 	.word     _loop        /* DebugMon_Handler */
-	.word     _loop        /* 0 */
+	.word     0            /* 0 */
 	.word     _loop        /* PendSV_Handler */
 	.word     _loop        /* SysTick_Handler */
 	/* External Interrupts */
