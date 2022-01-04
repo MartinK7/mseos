@@ -1,5 +1,5 @@
 	.section .ivt
-	.word     _estack      /* _estack */
+	.word     _stack       /* _estack */
 	.word     _reset       /* Reset_Handler */
 	.word     _loop        /* NMI_Handler */
 	.word     _loop        /* HardFault_Handler */

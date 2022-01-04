@@ -1,22 +1,13 @@
 
-# DEFAULT CONFIGURE
 CROSS_COMPILE ?= arm-none-eabi-
-TARGET_PLATOFRM ?= STM32F429_DISCOVERY
-
-# PLATFORM
-ifeq ($(TARGET_PLATOFRM),STM32F429_DISCOVERY)
-LINKERSCRIPT := ./kernel/platform/stm32f429_discovery/linkerscript.ld
-TARGET := stm32f429_discovery
-SRC += ./kernel/platform/stm32f429_discovery/head.o
-SRC += ./kernel/cpu/arm/boot.o
-CCFLAGS += -mthumb -mcpu=cortex-m4
-endif
+LINKERSCRIPT := linkerscript.ld
 
 # SOURCES
-SRC += ./kernel/main.o
+SRC += main.o
+SRC += head.o
 
 # INCLUDES
-INC += -I kernel/include
+INC += -I ../../kernel/include
 
 # COMPILER EXECUTABLES
 
@@ -27,7 +18,7 @@ OBJDUMP := $(CROSS_COMPILE)objdump
 
 # COMPILER SETTINGS
 
-CCFLAGS += -nostdlib -nostdinc
+CCFLAGS += -nostdlib -nostdinc -fPIC
 
 # MAKEFILE DEPENDENCIES
 
