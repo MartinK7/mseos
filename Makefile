@@ -31,7 +31,19 @@ CCFLAGS += -nostdlib -nostdinc
 
 # MAKEFILE DEPENDENCIES
 
-all: $(SRC)
+
+all: tools apps kernel
+	echo "Done"
+
+.PHONY: tools	
+tools:
+	make -C tools/bin2c
+	
+.PHONY: apps
+apps:
+	make -C apps/stm32blink
+
+kernel: $(SRC)
 	$(LD) $(SRC) -o $(TARGET).elf -T $(LINKERSCRIPT)
 	$(OBJCOPY) -O binary $(TARGET).elf $(TARGET).bin
 	xxd $(TARGET).bin
@@ -44,5 +56,8 @@ all: $(SRC)
 	$(CC) $(INC) $(CCFLAGS) -c $< -o $@
 
 clean:
+	make -C tools/bin2c clean
+	make -C apps/stm32blink clean
 	$(RM) $(SRC) $(TARGET).elf $(TARGET).bin
+	echo "Done"
 	
