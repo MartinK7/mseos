@@ -1,8 +1,8 @@
 MEMORY
 {
-	FLASH (rx)  : ORIGIN = 0x00800000, LENGTH = 2048K
+	FLASH (rx)  : ORIGIN = 0x08000000, LENGTH = 2048K
 	SRAM (rwx)  : ORIGIN = 0x20000000, LENGTH = 176K
-	SDRAM (rwx) : ORIGIN = 0x40000000, LENGTH = 8192K
+	SDRAM (rwx) : ORIGIN = 0x90000000, LENGTH = 8192K
 }
 
 SECTIONS
@@ -18,28 +18,36 @@ SECTIONS
 	
 	.data :
 	{
-		_start_data = .;
+		_data_start = .;
 		*(.data)
-		_end_data = .;
+		_data_end = .;
 	} >SRAM AT >FLASH
 
 	.bss :
 	{
-		_start_bss = .;
+		_bss_start = .;
 		*(.bss)
-		_end_bss = .;
+		_bss_end = .;
 	} >SRAM
 	
-	.stack (NOLOAD) :
+	.kstack (NOLOAD) :
 	{
 		. = ALIGN(4);
-		*(.stack)
+		_kstack_top = .;
+		*(.kstack)
+		_kstack_bot = .;
 	} >SRAM
 	
-	.heap (NOLOAD) :
+	.kheap (NOLOAD) :
 	{
 		. = ALIGN(4);
-		*(.heap)
-	} >SDRAM	
+		*(.kheap)
+	} >SRAM
+	
+	.uheap (NOLOAD) :
+	{
+		. = ALIGN(4);
+		*(.uheap)
+	} >SDRAM
 }
 

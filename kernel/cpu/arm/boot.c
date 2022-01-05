@@ -1,14 +1,20 @@
 
+#include "configure.h"
+
 extern void main(void);
 
 extern unsigned int _rodata_end;
-extern unsigned int _start_data;
-extern unsigned int _end_data;
-extern unsigned int _start_bss;
-extern unsigned int _end_bss;
+extern unsigned int _data_start;
+extern unsigned int _data_end;
+extern unsigned int _bss_start;
+extern unsigned int _bss_end;
 
-unsigned int __attribute__((section(".stack"))) _stack[64*1024/sizeof(int)];
-unsigned int __attribute__((section(".heap"))) _heap[8*1024*1024/sizeof(int)];
+// Kernel space
+unsigned int __attribute__((section(".kstack"))) _kstack[CONFIG_KSTACK_SIZE];
+unsigned int __attribute__((section(".kheap"))) _kheap[CONFIG_KHEAP_SIZE];
+
+// Userspace
+unsigned int __attribute__((section(".uheap"))) _uheap[CONFIG_UHEAP_SIZE];
 
 _Noreturn void _loop(void)
 {
@@ -22,13 +28,13 @@ _Noreturn void _reset(void)
 	asm volatile ("cpsid i");
 
 	src = &_rodata_end;
-	dst = &_start_data;
-	while (dst < &_end_data) {
+	dst = &_data_start;
+	while (dst < &_data_end) {
 		*dst++ = *src++;
 	}
 
-	dst = &_start_bss;
-	while (dst < &_end_bss) {
+	dst = &_bss_start;
+	while (dst < &_bss_end) {
 		*dst++ = 0;
 	}
 

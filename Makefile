@@ -10,6 +10,7 @@ TARGET := stm32f429_discovery
 SRC += ./kernel/platform/stm32f429_discovery/head.o
 SRC += ./kernel/cpu/arm/boot.o
 CCFLAGS += -mthumb -mcpu=cortex-m4
+INC += -I kernel/platform/stm32f429_discovery
 endif
 
 # SOURCES
@@ -31,8 +32,11 @@ CCFLAGS += -nostdlib -nostdinc
 
 # MAKEFILE DEPENDENCIES
 
-
-all: tools apps kernel
+all:
+	make clean
+	make tools
+	make apps
+	make kernel
 	echo "Done"
 
 .PHONY: tools	

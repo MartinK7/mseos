@@ -25,7 +25,7 @@ CCFLAGS += -nostdlib -nostdinc -fPIC
 
 # MAKEFILE DEPENDENCIES
 
-all: $(SRC)
+all: clean $(SRC)
 	$(LD) $(SRC) -o $(TARGET).elf -T $(LINKERSCRIPT)
 	$(OBJCOPY) -O binary $(TARGET).elf $(TARGET).bin
 	xxd $(TARGET).bin
