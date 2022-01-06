@@ -1,0 +1,6 @@
+add_executable(${TARGET} ${SOURCES})
+target_compile_definitions(${TARGET} PUBLIC ${DEFINES})
+target_include_directories(${TARGET} PUBLIC ${INCLUDES})
+target_compile_options(${TARGET} PUBLIC ${CFLAGS})
+target_link_options(${TARGET} PUBLIC ${LFLAGS})
+target_link_libraries(${TARGET} ${LIBRARIES})
