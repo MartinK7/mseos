@@ -1,7 +1,9 @@
 
 #include "configure.h"
+#include "main.h"
 
-extern void main(void);
+extern void platform_init(void);
+extern void platform_register(void);
 
 extern unsigned int _rodata_end;
 extern unsigned int _data_start;
@@ -38,7 +40,10 @@ _Noreturn void _reset(void)
 		*dst++ = 0;
 	}
 
-	main();
+	platform_init();
+	kernel_init();
+	platform_register();
+	kernel_start();
 	_loop();
 }
 

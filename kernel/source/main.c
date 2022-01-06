@@ -13,9 +13,5 @@ void kernel_init(void)
 
 void kernel_start(void)
 {
-	int8_t running = 1;
-	while(running) {
-		k_zero[0] += 3;
-	}
 }
 

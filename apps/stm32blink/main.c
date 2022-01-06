@@ -1,5 +1,5 @@
 
-#include <sys/types.h>
+#include <stdint.h>
 
 static int k;
 static int p = 5;
@@ -11,7 +11,7 @@ int32_t main(int32_t argc, char *argv[])
 	// Here place GPIO INIT
 	// ...
 	
-	for(;;)
+	for(uint32_t i = 0; i < 64; ++i)
 	{
 		// SET GPIO
 		for(volatile uint32_t k=0;k<10000000;++k);// Stupid delay
