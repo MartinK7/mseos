@@ -7,6 +7,7 @@ set(TARGET stm32blink)
 ################################################################################
 
 set(LINKERSCRIPT linkerscript.ld)
+set(ISAPP YES)
 
 list(APPEND CFLAGS
 	-mthumb -mcpu=cortex-m4
@@ -22,6 +23,8 @@ list(APPEND SOURCES
 
 list(APPEND INCLUDES
 	${PROJECT_SOURCE_DIR}/kernel/include
+	${PROJECT_SOURCE_DIR}/kernel/cpu/arm/cmsis
+	${PROJECT_SOURCE_DIR}/kernel/cpu/arm/device/st/stm32f4xx
 )
 
 ################################################################################

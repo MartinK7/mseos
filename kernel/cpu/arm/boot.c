@@ -1,22 +1,24 @@
 
+#include "sys/types.h"
+
 #include "configure.h"
 #include "main.h"
 
 extern void platform_init(void);
 extern void platform_register(void);
 
-extern unsigned int _rodata_end;
-extern unsigned int _data_start;
-extern unsigned int _data_end;
-extern unsigned int _bss_start;
-extern unsigned int _bss_end;
+extern uint32_t _rodata_end;
+extern uint32_t _data_start;
+extern uint32_t _data_end;
+extern uint32_t _bss_start;
+extern uint32_t _bss_end;
 
 // Kernel space
-unsigned int __attribute__((section(".kstack"))) _kstack[CONFIG_KSTACK_SIZE];
-unsigned int __attribute__((section(".kheap"))) _kheap[CONFIG_KHEAP_SIZE];
+uint32_t __attribute__((section(".kstack"))) _kstack[CONFIG_KSTACK_SIZE];
+uint32_t __attribute__((section(".kheap"))) _kheap[CONFIG_KHEAP_SIZE];
 
 // Userspace
-unsigned int __attribute__((section(".uheap"))) _uheap[CONFIG_UHEAP_SIZE];
+uint32_t __attribute__((section(".uheap"))) _uheap[CONFIG_UHEAP_SIZE];
 
 _Noreturn void _loop(void)
 {
@@ -25,7 +27,7 @@ _Noreturn void _loop(void)
 
 _Noreturn void _reset(void)
 {
-	unsigned int *src, *dst;
+	uint32_t *src, *dst;
 
 	asm volatile ("cpsid i");
 

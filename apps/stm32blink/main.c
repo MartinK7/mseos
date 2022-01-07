@@ -1,22 +1,16 @@
 
 #include <stdint.h>
 
-static int k;
-static int p = 5;
-static const int x = 7;
-static int qwe[4] = {0};
+#include "stm32f429xx.h"
 
 int main(int argc, char *argv[])
 {
-	// Here place GPIO INIT
-	// ...
-	
-	for(uint32_t i = 0; i < 64; ++i)
+	for(uint32_t i = 0; i < 8; ++i)
 	{
-		// SET GPIO
-		for(volatile uint32_t k=0;k<10000000;++k);// Stupid delay
-		// RESET GPIO
-		for(volatile uint32_t k=0;k<10000000;++k);// Stupid delay
+		GPIOG->BSRR = GPIO_BSRR_BS13 | GPIO_BRR_BR14;
+		for(volatile uint32_t k=0;k<100000;++k);// Stupid delay
+		GPIOG->BSRR = GPIO_BSRR_BR13 | GPIO_BSRR_BS14;
+		for(volatile uint32_t k=0;k<100000;++k);// Stupid delay
 	}
 	return 0;
 }

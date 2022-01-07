@@ -19,11 +19,22 @@ set_property(SOURCE ${SOURCES} PROPERTY LANGUAGE C)
 
 include(${PROJECT_SOURCE_DIR}/cmake/toolchain_gcc.cmake)
 
+list(APPEND CFLAGS
+    -O0
+)
+
 set_target_properties(${TARGET} PROPERTIES SUFFIX ".elf")
 
 add_custom_command(TARGET ${TARGET} POST_BUILD
-        COMMAND arm-none-eabi-size --format=berkeley --totals "$<TARGET_FILE:${TARGET}>"
-        COMMAND arm-none-eabi-objcopy -O binary "$<TARGET_FILE:${TARGET}>" "$<TARGET_FILE:${TARGET}>.bin"
-        COMMAND xxd "$<TARGET_FILE:${TARGET}>.bin" > "$<TARGET_FILE:${TARGET}>.bin.list"
-        COMMAND arm-none-eabi-objdump -d "$<TARGET_FILE:${TARGET}>" > "$<TARGET_FILE:${TARGET}>.list"
+    COMMAND arm-none-eabi-size --format=berkeley --totals "$<TARGET_FILE:${TARGET}>"
+    COMMAND arm-none-eabi-objcopy -O binary "$<TARGET_FILE:${TARGET}>" "$<TARGET_FILE:${TARGET}>.bin"
+    COMMAND xxd "$<TARGET_FILE:${TARGET}>.bin" > "$<TARGET_FILE:${TARGET}>.bin.list"
+    COMMAND arm-none-eabi-objdump -d "$<TARGET_FILE:${TARGET}>" > "$<TARGET_FILE:${TARGET}>.list"
 )
+
+if (ISAPP)
+add_custom_command(TARGET ${TARGET} POST_BUILD
+    COMMAND ${CMAKE_BINARY_DIR}/tools/bin2c/bin2c "$<TARGET_FILE:${TARGET}>.bin" > "$<TARGET_FILE:${TARGET}>.bin.c"
+    COMMENT "Converting MEXE ${TARGET}.bin to appendable .c file"
+)
+endif ()
