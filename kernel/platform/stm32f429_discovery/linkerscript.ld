@@ -29,15 +29,15 @@ SECTIONS
 		*(.bss)
 		_bss_end = .;
 	} >SRAM
-	
+
 	.kstack (NOLOAD) :
 	{
 		. = ALIGN(4);
-		_kstack_top = .;
-		*(.kstack)
 		_kstack_bot = .;
+		*(.kstack)
+		_kstack_top = .;
 	} >SRAM
-	
+
 	.kheap (NOLOAD) :
 	{
 		. = ALIGN(4);

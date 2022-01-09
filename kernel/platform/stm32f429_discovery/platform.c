@@ -1,5 +1,30 @@
 
+#include "sys/tick.h"
 #include "stm32f4xx.h"
+
+volatile void irq_systick(void)
+{
+	tick_irq_callback_increment(1);
+}
+
+static uint32_t core_clock_get(void)
+{
+	// TODO Calcualtion
+	return 16000000;
+}
+
+static void clock_init(void)
+{
+	// TODO
+}
+
+static void systick_init(void)
+{
+	NVIC_SetPriorityGrouping(0x03U);
+	SysTick_Config(core_clock_get()/1000);
+	SysTick->CTRL |= 0x04U;
+	NVIC_SetPriority(SysTick_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 0, 0));
+}
 
 static void rcc_init(void)
 {
@@ -119,23 +144,36 @@ void platform_init(void)
 	// Enable FPU (set CP10 and CP11 Full Access)
 	SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));
 
+	clock_init();
+	systick_init();
 	rcc_init();
 	gpio_init();
 }
 
 // "FAKESPACE file" This is converted executable from apps/stm32blink/
-volatile const uint32_t __attribute__((aligned(4))) bin2c__stm32blink_elf_bin[] = {
-		0x4558454d, 0x00000000, 0x00000011, 0x00000400, 0xb087b480, 0x6078af00, 0x23006039, 0xe01c617b,
-		0x4a134b12, 0x2300619a, 0xe002613b, 0x3301693b, 0x693b613b, 0x42934a0f, 0x4b0cd9f8, 0x619a4a0e,
-		0x60fb2300, 0x68fbe002, 0x60fb3301, 0x4a0968fb, 0xd9f84293, 0x3301697b, 0x697b617b, 0xd9df2b07,
-		0x46182300, 0x46bd371c, 0x4770bc80, 0x40021800, 0x40002000, 0x0001869f, 0x20004000, 0xffffffff
+static volatile const uint32_t __attribute__((aligned(4))) bin2c__stm32blink_elf_bin[] = {
+		0x4558454d, 0x00000000, 0x00000011, 0x00000400, 0xb087b480, 0x6078af00, 0x687b6039, 0xd1022b00,
+		0x33fff04f, 0x2300e036, 0xe02e617b, 0x681b683b, 0x2b30781b, 0xf44fd102, 0xe0015300, 0x4380f44f,
+		0x61934a17, 0x613b2300, 0x693be002, 0x613b3301, 0x4a14693b, 0xd9f84293, 0x681b683b, 0x2b30781b,
+		0xf04fd102, 0xe0015300, 0x4380f04f, 0x61934a0c, 0x60fb2300, 0x68fbe002, 0x60fb3301, 0x4a0968fb,
+		0xd9f84293, 0x3301697b, 0x697b617b, 0x6f80f5b3, 0x2337d3cc, 0x371c4618, 0xbc8046bd, 0xbf004770,
+		0x40021800, 0x0001869f, 0xffffffff
 };
 
 void platform_register(void)
 {
+	for(uint32_t i = 0; i < 10; ++i)
+	{
+		GPIOG->BSRR = GPIO_BSRR_BS13 | GPIO_BSRR_BR14;
+		tick_delay(100);
+		GPIOG->BSRR = GPIO_BSRR_BR13 | GPIO_BSRR_BS14;
+		tick_delay(100);
+	}
+	GPIOG->BSRR = GPIO_BSRR_BR13 | GPIO_BSRR_BR14;
+
 	// Load application to RAM from "FAKESPACE filesystem"
-	static uint32_t __attribute__((aligned(4))) ram[sizeof(bin2c__stm32blink_elf_bin)];
-	for(uint32_t i = 0; i < sizeof(bin2c__stm32blink_elf_bin); ++i)
+	uint32_t __attribute__((aligned(4))) ram[sizeof(bin2c__stm32blink_elf_bin) / sizeof(*bin2c__stm32blink_elf_bin)];
+	for(uint32_t i = 0; i < sizeof(bin2c__stm32blink_elf_bin) / sizeof(*bin2c__stm32blink_elf_bin); ++i)
 		ram[i] = bin2c__stm32blink_elf_bin[i];
 
 	// Check MEXE
@@ -145,9 +183,11 @@ void platform_register(void)
 
 	// Calculate pointer
 	int (*mexe_main)(int argc, char *argv[]) = (void*)((uint8_t*)ram + ram[2]);
-	char *arg[1] = {"ahoj"};
 
 	// Execute
+	// In GDB:
+	// add-symbol-file cmake-build-debug/apps/stm32blink/stm32blink.elf &ram[0]
+	char *arg[1] = {"0"};
 	int retval = mexe_main(1, arg);
 	(void)retval;
 }

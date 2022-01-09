@@ -20,3 +20,5 @@ add_subdirectory(apps/stm32blink)
 
 add_subdirectory(kernel)
 
+## This is hack for CLion (false dependency error)
+set(CMAKE_C_COMPILER "arm-none-eabi-gcc")

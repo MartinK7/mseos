@@ -5,13 +5,15 @@
 
 int main(int argc, char *argv[])
 {
-	for(uint32_t i = 0; i < 8; ++i)
+	if(argc == 0)
+		return -1;
+	for(uint32_t i = 0; i < 1024; ++i)
 	{
-		GPIOG->BSRR = GPIO_BSRR_BS13 | GPIO_BRR_BR14;
+		GPIOG->BSRR = argv[0][0] == '0' ? GPIO_BSRR_BS13 : GPIO_BSRR_BS14;
 		for(volatile uint32_t k=0;k<100000;++k);// Stupid delay
-		GPIOG->BSRR = GPIO_BSRR_BR13 | GPIO_BSRR_BS14;
+		GPIOG->BSRR = argv[0][0] == '0' ? GPIO_BSRR_BR13 : GPIO_BSRR_BR14;
 		for(volatile uint32_t k=0;k<100000;++k);// Stupid delay
 	}
-	return 0;
+	return 55;
 }
 

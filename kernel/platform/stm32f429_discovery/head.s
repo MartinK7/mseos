@@ -14,7 +14,7 @@
 	.word     _loop        /* DebugMon_Handler */
 	.word     0            /* 0 */
 	.word     _loop        /* PendSV_Handler */
-	.word     _loop        /* SysTick_Handler */
+	.word     irq_systick  /* SysTick_Handler */
 	/* External Interrupts */
 	.word     _loop        /* Window WatchDog              */
 	.word     _loop        /* PVD through EXTI Line detection */

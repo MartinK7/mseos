@@ -29,8 +29,6 @@ _Noreturn void _reset(void)
 {
 	uint32_t *src, *dst;
 
-	asm volatile ("cpsid i");
-
 	src = &_rodata_end;
 	dst = &_data_start;
 	while (dst < &_data_end) {

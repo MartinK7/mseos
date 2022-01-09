@@ -39,11 +39,13 @@ list(APPEND INCLUDES
 ################################################################################
 
 list(APPEND SOURCES
-	source/main.c
+	mseos/main.c
+	mseos/sys/tick.c
 )
 
 list(APPEND INCLUDES
 	include
+	mseos
 )
 
 ################################################################################
