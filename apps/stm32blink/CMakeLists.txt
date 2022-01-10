@@ -23,8 +23,8 @@ list(APPEND SOURCES
 
 list(APPEND INCLUDES
 	${PROJECT_SOURCE_DIR}/kernel/include
-	${PROJECT_SOURCE_DIR}/kernel/cpu/arm/cmsis
-	${PROJECT_SOURCE_DIR}/kernel/cpu/arm/device/st/stm32f4xx
+	${PROJECT_SOURCE_DIR}/kernel/include/cpu/arm/cmsis
+	${PROJECT_SOURCE_DIR}/kernel/include/cpu/arm/device/st/stm32f4xx
 )
 
 ################################################################################

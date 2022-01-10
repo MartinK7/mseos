@@ -17,12 +17,11 @@ list(APPEND DEFINES
 list(APPEND SOURCES
 	platform/stm32f429_discovery/head.s
 	platform/stm32f429_discovery/platform.c
-	cpu/arm/boot.c
 )
 
 list(APPEND INCLUDES
 	platform/stm32f429_discovery
-	cpu/arm/device/st/stm32f4xx
+	include/cpu/arm/device/st/stm32f4xx
 )
 
 ################################################################################
@@ -31,7 +30,7 @@ list(APPEND INCLUDES
 
 # PLATFORM
 list(APPEND INCLUDES
-	cpu/arm/cmsis
+	include/cpu/arm/cmsis
 )
 
 ################################################################################
@@ -40,6 +39,7 @@ list(APPEND INCLUDES
 
 list(APPEND SOURCES
 	mseos/main.c
+	mseos/boot.c
 	mseos/sys/tick.c
 	mseos/sys/kheap.c
 )
