@@ -15,7 +15,6 @@ extern uint32_t _bss_end;
 
 // Kernel space
 uint32_t __attribute__((section(".kstack"))) _kstack[CONFIG_KSTACK_SIZE];
-uint32_t __attribute__((section(".kheap"))) _kheap[CONFIG_KHEAP_SIZE];
 
 // Userspace
 uint32_t __attribute__((section(".uheap"))) _uheap[CONFIG_UHEAP_SIZE];

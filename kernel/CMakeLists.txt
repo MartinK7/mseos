@@ -41,6 +41,7 @@ list(APPEND INCLUDES
 list(APPEND SOURCES
 	mseos/main.c
 	mseos/sys/tick.c
+	mseos/sys/kheap.c
 )
 
 list(APPEND INCLUDES

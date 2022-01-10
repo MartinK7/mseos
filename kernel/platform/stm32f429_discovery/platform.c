@@ -1,15 +1,16 @@
 
 #include "sys/tick.h"
+#include "sys/kheap.h"
 #include "stm32f4xx.h"
 
-volatile void irq_systick(void)
+void irq_systick(void)
 {
 	tick_irq_callback_increment(1);
 }
 
 static uint32_t core_clock_get(void)
 {
-	// TODO Calcualtion
+	// TODO Calculation
 	return 16000000;
 }
 
@@ -162,31 +163,35 @@ static volatile const uint32_t __attribute__((aligned(4))) bin2c__stm32blink_elf
 
 void platform_register(void)
 {
-	for(uint32_t i = 0; i < 10; ++i)
+	/*for(uint32_t i = 0; i < 10; ++i)
 	{
 		GPIOG->BSRR = GPIO_BSRR_BS13 | GPIO_BSRR_BR14;
 		tick_delay(100);
 		GPIOG->BSRR = GPIO_BSRR_BR13 | GPIO_BSRR_BS14;
 		tick_delay(100);
 	}
-	GPIOG->BSRR = GPIO_BSRR_BR13 | GPIO_BSRR_BR14;
+	GPIOG->BSRR = GPIO_BSRR_BR13 | GPIO_BSRR_BR14;*/
 
 	// Load application to RAM from "FAKESPACE filesystem"
-	uint32_t __attribute__((aligned(4))) ram[sizeof(bin2c__stm32blink_elf_bin) / sizeof(*bin2c__stm32blink_elf_bin)];
-	for(uint32_t i = 0; i < sizeof(bin2c__stm32blink_elf_bin) / sizeof(*bin2c__stm32blink_elf_bin); ++i)
-		ram[i] = bin2c__stm32blink_elf_bin[i];
+	uint32_t *app1 = kheap_alloc(sizeof(bin2c__stm32blink_elf_bin));
+	uint32_t *app2 = kheap_alloc(sizeof(bin2c__stm32blink_elf_bin));
+
+	for(uint32_t i = 0; i < sizeof(bin2c__stm32blink_elf_bin) / sizeof(*bin2c__stm32blink_elf_bin); ++i) {
+		app1[i] = bin2c__stm32blink_elf_bin[i];
+		app2[i] = bin2c__stm32blink_elf_bin[i];
+	}
 
 	// Check MEXE
 	for(uint32_t i = 0; i < 4; ++i)
-		if(((uint8_t*)bin2c__stm32blink_elf_bin)[i] != "MEXE"[i])
+		if(((uint8_t*)app1)[i] != "MEXE"[i] || ((uint8_t*)app2)[i] != "MEXE"[i])
 			return;
 
 	// Calculate pointer
-	int (*mexe_main)(int argc, char *argv[]) = (void*)((uint8_t*)ram + ram[2]);
+	int (*mexe_main)(int argc, char *argv[]) = (void*)((uint8_t*)app1 + app1[2]);
 
 	// Execute
 	// In GDB:
-	// add-symbol-file cmake-build-debug/apps/stm32blink/stm32blink.elf &ram[0]
+	// add-symbol-file cmake-build-debug/apps/stm32blink/stm32blink.elf &app1[0]
 	char *arg[1] = {"0"};
 	int retval = mexe_main(1, arg);
 	(void)retval;

@@ -10,5 +10,9 @@ typedef __INT16_TYPE__ int16_t;
 typedef __INT32_TYPE__ int32_t;
 typedef __INT64_TYPE__ int64_t;
 
+#ifndef NULL
+#define NULL ((void*)(0))
+#endif // NULL
+
 #endif // TYPES_H
 
