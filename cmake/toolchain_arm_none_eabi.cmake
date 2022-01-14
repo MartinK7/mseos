@@ -17,11 +17,11 @@ set_property(SOURCE ${SOURCES} PROPERTY LANGUAGE C)
 ##                              COMPILER                                      ##
 ################################################################################
 
-include(${PROJECT_SOURCE_DIR}/cmake/toolchain_gcc.cmake)
-
 list(APPEND CFLAGS
-    -O0
+    -O0 -g3
 )
+
+include(${PROJECT_SOURCE_DIR}/cmake/toolchain_gcc.cmake)
 
 set_target_properties(${TARGET} PROPERTIES SUFFIX ".elf")
 

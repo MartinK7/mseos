@@ -1,11 +1,13 @@
 
 #include "sys/tick.h"
 #include "sys/kheap.h"
+#include "sys/scheduler.h"
 #include "stm32f4xx.h"
 
 void irq_systick(void)
 {
-	tick_irq_callback_increment(1);
+	tick_increment_irq_cb(1);
+	scheduler_switch_task_irq_cb();
 }
 
 static uint32_t core_clock_get(void)
@@ -152,26 +154,25 @@ void platform_init(void)
 }
 
 // "FAKESPACE file" This is converted executable from apps/stm32blink/
-static volatile const uint32_t __attribute__((aligned(4))) bin2c__stm32blink_elf_bin[] = {
-		0x4558454d, 0x00000000, 0x00000011, 0x00000400, 0xb087b480, 0x6078af00, 0x687b6039, 0xd1022b00,
-		0x33fff04f, 0x2300e036, 0xe02e617b, 0x681b683b, 0x2b30781b, 0xf44fd102, 0xe0015300, 0x4380f44f,
-		0x61934a17, 0x613b2300, 0x693be002, 0x613b3301, 0x4a14693b, 0xd9f84293, 0x681b683b, 0x2b30781b,
-		0xf04fd102, 0xe0015300, 0x4380f04f, 0x61934a0c, 0x60fb2300, 0x68fbe002, 0x60fb3301, 0x4a0968fb,
-		0xd9f84293, 0x3301697b, 0x697b617b, 0x6f80f5b3, 0x2337d3cc, 0x371c4618, 0xbc8046bd, 0xbf004770,
-		0x40021800, 0x0001869f, 0xffffffff
+volatile const uint32_t __attribute__((aligned(4))) bin2c__stm32blink_elf_bin[] = {
+		0x4558454d, 0x00000000, 0x00000011, 0x00000400, 0xb086b580, 0x6078af00, 0x687b6039, 0xd1022b00,
+		0x33fff04f, 0x2300e036, 0xe02e617b, 0x681b683b, 0x2b30781b, 0x4b19d103, 0x4798681b, 0x4b18e002,
+		0x4798681b, 0x613b2300, 0x693be002, 0x613b3301, 0x4a14693b, 0xd9f84293, 0x681b683b, 0x2b30781b,
+		0x4b11d103, 0x4798681b, 0x4b10e002, 0x4798681b, 0x60fb2300, 0x68fbe002, 0x60fb3301, 0x4a0968fb,
+		0xd9f84293, 0x3301697b, 0x697b617b, 0x6f80f5b3, 0x2337d3cc, 0x37184618, 0xbd8046bd, 0x080001ac,
+		0x080001b0, 0x0001869f, 0x080001b4, 0x080001b8, 0xffffffff
 };
+
+// Dummy
+void syscall_open(void){GPIOG->BSRR = GPIO_BSRR_BS13;}
+void syscall_close(void){GPIOG->BSRR = GPIO_BSRR_BS14;}
+void syscall_read(void){GPIOG->BSRR = GPIO_BSRR_BR13;}
+void syscall_write(void){GPIOG->BSRR = GPIO_BSRR_BR14;}
+void syscall_flush(void){}
+void syscall_ioctl(void){}
 
 void platform_register(void)
 {
-	/*for(uint32_t i = 0; i < 10; ++i)
-	{
-		GPIOG->BSRR = GPIO_BSRR_BS13 | GPIO_BSRR_BR14;
-		tick_delay(100);
-		GPIOG->BSRR = GPIO_BSRR_BR13 | GPIO_BSRR_BS14;
-		tick_delay(100);
-	}
-	GPIOG->BSRR = GPIO_BSRR_BR13 | GPIO_BSRR_BR14;*/
-
 	// Load application to RAM from "FAKESPACE filesystem"
 	uint32_t *app1 = kheap_alloc(sizeof(bin2c__stm32blink_elf_bin));
 	uint32_t *app2 = kheap_alloc(sizeof(bin2c__stm32blink_elf_bin));

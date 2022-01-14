@@ -38,10 +38,11 @@ list(APPEND INCLUDES
 ################################################################################
 
 list(APPEND SOURCES
-	mseos/main.c
+	mseos/kernel.c
 	mseos/boot.c
 	mseos/sys/tick.c
 	mseos/sys/kheap.c
+	mseos/sys/scheduler.c
 )
 
 list(APPEND INCLUDES

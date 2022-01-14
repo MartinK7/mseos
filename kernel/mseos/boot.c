@@ -2,7 +2,7 @@
 #include "sys/types.h"
 
 #include "configure.h"
-#include "main.h"
+#include "kernel.h"
 
 extern void platform_init(void);
 extern void platform_register(void);

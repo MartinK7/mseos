@@ -106,4 +106,11 @@
 	.word     _loop        /* SAI1                         */
 	.word     _loop        /* LTDC_IRQHandler              */
 	.word     _loop        /* LTDC_ER_IRQHandler           */
-	.word     _loop        /* DMA2D                        */          
+	.word     _loop        /* DMA2D                        */
+	/* System-call Vector Table */
+	.word     syscall_open /* Offset 0x000001AC */
+	.word     syscall_close
+	.word     syscall_read
+	.word     syscall_write
+	.word     syscall_flush
+	.word     syscall_ioctl

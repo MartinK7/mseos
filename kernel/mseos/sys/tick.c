@@ -3,7 +3,7 @@
 
 volatile static uint32_t system_tick;
 
-void tick_irq_callback_increment(uint32_t delta_ticks)
+void tick_increment_irq_cb(uint32_t delta_ticks)
 {
 	system_tick += delta_ticks;
 }

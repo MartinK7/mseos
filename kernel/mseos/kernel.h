@@ -1,9 +1,9 @@
 
-#ifndef MAIN_H
-#define MAIN_H
+#ifndef KERNEL_H
+#define KERNEL_H
 
 void kernel_init(void);
 void kernel_start(void);
 
-#endif // MAIN_H
+#endif // KERNEL_H
 

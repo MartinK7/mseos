@@ -1,7 +1,6 @@
 
 #include <stdint.h>
-
-#include "stm32f429xx.h"
+#include "sys/syscall.h"
 
 int main(int argc, char *argv[])
 {
@@ -9,9 +8,15 @@ int main(int argc, char *argv[])
 		return -1;
 	for(uint32_t i = 0; i < 1024; ++i)
 	{
-		GPIOG->BSRR = argv[0][0] == '0' ? GPIO_BSRR_BS13 : GPIO_BSRR_BS14;
+		if(argv[0][0] == '0')
+			syscall_open();
+		else
+			syscall_close();
 		for(volatile uint32_t k=0;k<100000;++k);// Stupid delay
-		GPIOG->BSRR = argv[0][0] == '0' ? GPIO_BSRR_BR13 : GPIO_BSRR_BR14;
+		if(argv[0][0] == '0')
+			syscall_read();
+		else
+			syscall_write();
 		for(volatile uint32_t k=0;k<100000;++k);// Stupid delay
 	}
 	return 55;

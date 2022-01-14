@@ -14,5 +14,9 @@ typedef __INT64_TYPE__ int64_t;
 #define NULL ((void*)(0))
 #endif // NULL
 
+typedef int8_t error_t;
+#define ERROR_NO_ERROR      ( 0)
+#define ERROR_OUT_OF_MEMORY (-1)
+
 #endif // TYPES_H
 
