@@ -34,8 +34,12 @@ void scheduler_switch_task_irq_cb(void)
 	__asm volatile (
 		// [ASSEMBLY CODE]               [NOTE]              [C equivalent pseudo code]
 		//
-		"cpsid i                  \n" // Disable interrupt   backup_cpu_context();
-		"push  {r4-r11}           \n" // Backup r4-r11       ..
+		"cpsid i                  \n" // Disable interrupt   __irq_disable();
+		"ldr   r0, =ready         \n" //                     if(ready != 0) return;
+		"ldr   r1, [r0]           \n" //                     ..
+		"cmp   r1, #0             \n" //                     ..
+		"beq   switch_task_exit   \n" //                     ..
+		"push  {r4-r11}           \n" // Backup r4-r11       backup_cpu_context();
 		"ldr   r0, =task_running  \n" // r0 = &task_running  task_running->sp = $sp;
 		"ldr   r1, [r0]           \n" // r1 = *r0            ..
 		"str   sp, [r1]           \n" // sp = *r1            ..
@@ -45,7 +49,8 @@ void scheduler_switch_task_irq_cb(void)
 		"ldr   r1, [r0]           \n" // r1 = *r0            $sp = task_running->sp;
 		"ldr   sp, [r1]           \n" // sp = *r1            ..
 		"pop   {r4-r11}           \n" // Restore r4-r11      restore_cpu_context();
-		"cpsie i                  \n" // Enable interrupt    ..
+		"switch_task_exit:        \n" // Just a label
+		"cpsie i                  \n" // Enable interrupt    __irq_enable();
 		"bx    lr                 \n" // Exit                return;
 	);
 }

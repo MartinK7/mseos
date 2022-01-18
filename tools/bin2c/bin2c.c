@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
 	char *name = argv[1] + strlen(argv[1]) - 1;
 	while(name[-1] != '/' && name > argv[1])name--;
 
-	printf("volatile const uint32_t __attribute__((aligned(4))) bin2c__%s[] = {\n\t", name);
+	printf("const uint32_t __attribute__((aligned(4))) bin2c__%s[] = {\n\t", name);
 
 	int cnt = 0;
 	uint8_t c0, c1, c2;

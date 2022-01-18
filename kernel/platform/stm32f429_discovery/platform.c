@@ -8,8 +8,15 @@
 __attribute__((naked))
 void irq_systick(void)
 {
-//	tick_increment_irq_cb(1);
-	asm volatile ("b scheduler_switch_task_irq_cb");
+	__asm volatile (
+		// [ASSEMBLY CODE]                         [C equivalent pseudo code]
+		//
+		"push  {r3, lr}                     \n" // tick_increment_irq_cb(1);
+		"movs  r0, #1                       \n" // ..
+		"bl    tick_increment_irq_cb        \n" // ..
+		"pop   {r3, lr}                     \n" // ..
+		"b     scheduler_switch_task_irq_cb \n" // goto scheduler_switch_task_irq_cb;
+	);
 }
 
 static uint32_t core_clock_get(void)
@@ -147,23 +154,25 @@ static void gpio_init(void)
 void platform_init(void)
 {
 	// Enable FPU (set CP10 and CP11 Full Access)
-//	SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));
+	SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));
 
 	clock_init();
-	asm volatile ("cpsid i");
 	systick_init();
 	rcc_init();
 	gpio_init();
+
+	// Test what happen if systick interrupt occurs before scheduler is ready? - Fix
+	for(volatile int i=0;i<1000000;++i)asm volatile("nop");
 }
 
 // "FAKESPACE file" This is converted executable from apps/stm32blink/
 const uint32_t __attribute__((aligned(4))) bin2c__stm32blink_elf_bin[] = {
-		0x4558454d, 0x00000000, 0x00000011, 0x00000400, 0xb086b580, 0x6078af00, 0x613b687b, 0x617b2300,
-		0x693be032, 0xd1032b00, 0x681b4b1d, 0xe0024798, 0x681b4b1c, 0x23004798, 0xe00260fb, 0x330168fb,
-		0x693b60fb, 0x4a183301, 0xf203fb02, 0x429a68fb, 0x693bd8f4, 0xd1032b00, 0x681b4b14, 0xe0024798,
-		0x681b4b13, 0x23004798, 0xe00260bb, 0x330168bb, 0x693b60bb, 0x4a0c3301, 0xf203fb02, 0x429a68bb,
-		0x697bd8f4, 0x617b3301, 0x3301693b, 0x697a015b, 0xd3c6429a, 0xbf00bf00, 0x46bd3718, 0xbf00bd80,
-		0x080001ac, 0x080001b0, 0x000186a0, 0x080001b4, 0x080001b8, 0xffffffff
+		0x4558454d, 0x00000000, 0x00000011, 0x00000400, 0x47f0e92d, 0x015f1c43, 0xd028b082, 0xf8df4a1b,
+		0xf8df9078, 0x24008078, 0xfb024605, 0x4626fa03, 0xf8d8b305, 0x47983000, 0x9b009600, 0xd906459a,
+		0x33019b00, 0x9b009300, 0xd3f94553, 0xf8d9b1cd, 0x47983000, 0x9b019601, 0xd2054553, 0x33019b01,
+		0x9b019301, 0xd3f94553, 0x42bc3401, 0xb002d1e0, 0x87f0e8bd, 0x681b4b06, 0x95004798, 0x45539b00,
+		0x4b04d3de, 0x4798681b, 0xbf00e7e4, 0x000186a0, 0x080001ac, 0x080001b4, 0x080001b8, 0x080001b0,
+		0xffffffff
 };
 
 
