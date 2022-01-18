@@ -10,7 +10,7 @@ typedef struct {
 
 static scheduler_task_t *tasks[CONFIG_SCHEDULER_TASKS_MAX_COUNT] = {0};
 static scheduler_task_t *task_running = NULL;
-volatile static uint32_t ready = 0;  // Fix Optimize: This variable is used in assembly, do not remove
+volatile static uint32_t suspend_cnt = 1;  // Fix Optimize: This variable is used in assembly, do not remove
 static uint32_t pid_counter = 256, task_running_index = 0;
 
 __attribute__((used)) // Fix Optimize: This function is used in assembly, do not remove
@@ -35,10 +35,10 @@ void scheduler_switch_task_irq_cb(void)
 		// [ASSEMBLY CODE]               [NOTE]              [C equivalent pseudo code]
 		//
 		"cpsid i                  \n" // Disable interrupt   __irq_disable();
-		"ldr   r0, =ready         \n" //                     if(ready != 0) return;
+		"ldr   r0, =suspend_cnt   \n" //                     if(suspend_cnt == 0) return;
 		"ldr   r1, [r0]           \n" //                     ..
 		"cmp   r1, #0             \n" //                     ..
-		"beq   switch_task_exit   \n" //                     ..
+		"bne   switch_task_exit   \n" //                     ..
 		"push  {r4-r11}           \n" // Backup r4-r11       backup_cpu_context();
 		"ldr   r0, =task_running  \n" // r0 = &task_running  task_running->sp = $sp;
 		"ldr   r1, [r0]           \n" // r1 = *r0            ..
@@ -62,8 +62,11 @@ static void scheduler_start_asm(void)
 		// [ASSEMBLY CODE]               [NOTE]              [C equivalent pseudo code]
 		//
 		"cpsid i                  \n" // Disable interrupt
-		"ldr   r0, =ready         \n" //                      ready = 1;
-		"mov   r1, #1             \n" //                      ..
+		"ldr   r0, =suspend_cnt   \n" // $r0 = &suspend_cnt;  if(suspend_cnt != 1) goto _loop; // Kernel panic!
+		"ldr   r1, [r0]           \n" // $r1 = *$r0           ..
+		"cmp   r1, #1             \n" // cmp($r1,0)           ..
+		"bne   _loop              \n" // goto ifne _loop      ..
+		"sub   r1, #1             \n" //                      suspend_cnt -= 1;
 		"str   r1, [r0]           \n" //                      ..
 		"ldr   r0, =task_running  \n" //                      $sp = task_running->sp;
 		"ldr   r1, [r0]           \n" //                      ..
@@ -83,6 +86,24 @@ static void scheduler_start_asm(void)
 static void trap(void)
 {
 	for(;;);
+}
+
+void scheduler_suspend_all_tasks(void)
+{
+	asm volatile("cpsid i"); // Disable interrupt
+	if(suspend_cnt == -1)
+		asm volatile("b _loop"); // Kernel panic!
+	suspend_cnt += 1;
+	asm volatile("cpsie i"); // Enable interrupt
+}
+
+void scheduler_resume_all_tasks(void)
+{
+	asm volatile("cpsid i"); // Disable interrupt
+	if(suspend_cnt == 0)
+		asm volatile("b _loop"); // Kernel panic!
+	suspend_cnt -= 1;
+	asm volatile("cpsie i"); // Enable interrupt
 }
 
 void scheduler_start(void)
