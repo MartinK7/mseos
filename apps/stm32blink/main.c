@@ -5,7 +5,7 @@
 void _start(void *data)
 {
 	uint32_t data_u32 = (uint32_t)data;
-	for(uint32_t i = 0; i < 1024; ++i)
+	for(uint32_t i = 0; i < 32 + 32 * data_u32; ++i)
 	{
 		if(data_u32 == 0)
 			syscall_open();

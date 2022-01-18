@@ -10,7 +10,7 @@ typedef struct {
 
 static scheduler_task_t *tasks[CONFIG_SCHEDULER_TASKS_MAX_COUNT] = {0};
 static scheduler_task_t *task_running = NULL;
-static uint32_t ready = 0, pid_counter = 1, task_running_index = 0;
+static uint32_t ready = 0, pid_counter = 256, task_running_index = 0;
 
 static void switch_task(void)
 {
@@ -29,9 +29,8 @@ static void switch_task(void)
 __attribute__((naked)) void scheduler_switch_task_irq_cb(void)
 {
 	__asm (
-		// [ASSEMBLY CODE]               [NOTE]              [C equivalent code]
+		// [ASSEMBLY CODE]               [NOTE]              [C equivalent pseudo code]
 		//
-//		"bkpt 1                   \n" // Breakpoint
 		"cpsid i                  \n" // Disable interrupt   backup_cpu_context();
 		"push  {r4-r11}           \n" // Backup r4-r11       ..
 		"ldr   r0, =task_running  \n" // r0 = &task_running  task_running->sp = $sp;
@@ -51,10 +50,9 @@ __attribute__((naked)) void scheduler_switch_task_irq_cb(void)
 static void __attribute__((naked)) scheduler_start_asm(void)
 {
 	__asm (
-		// [ASSEMBLY CODE]               [NOTE]              [C equivalent code]
+		// [ASSEMBLY CODE]               [NOTE]              [C equivalent pseudo code]
 		//
-//		"bkpt 1                   \n" // Breakpoint
-		"cpsid i                  \n" // Disable interrupt   backup_cpu_context();
+		"cpsid i                  \n" // Disable interrupt
 		"ldr   r0, =ready         \n" //                      ready = 1;
 		"mov   r1, #1             \n" //                      ..
 		"str   r1, [r0]           \n" //                      ..
@@ -68,7 +66,8 @@ static void __attribute__((naked)) scheduler_start_asm(void)
 		"pop   {lr}               \n" // Restore ReturnAddress to lr
 		"add   sp, sp, #4         \n" // Discard xPSR
 		"cpsie i                  \n" // Enable interrupt
-		"mov   pc, lr             \n" //                      goto $lr;
+		"blx   lr                 \n" //                      $lr($r0); ~ function(data);
+		"b     trap               \n" //                      goto trap;
 
 		// Unused debug code
 //		"ldr   r0, gpiog          \n" //                      GPIOG->BSRR = GPIO_BSRR_BS13;
@@ -95,6 +94,11 @@ SP_OFFSET 4byte align / 8byte align
 0x00      r0  (new sp)
 #endif
 
+static void trap(void)
+{
+	for(;;);
+}
+
 void scheduler_start(void)
 {
 	// Find first thread and execute it!
@@ -109,8 +113,6 @@ void scheduler_start(void)
 	// Start task
 	if(task_running != NULL)
 		scheduler_start_asm();
-	for(;;); // TRAP
-	ready = 2;
 }
 
 uint32_t scheduler_create_task(void (*function)(void *data), void *data, uint32_t stack_size_words)
@@ -131,11 +133,11 @@ uint32_t scheduler_create_task(void (*function)(void *data), void *data, uint32_
 
 	// Setup initial stack
 	// Reserved
-	t->sp[  0] = 0x80808080; // reserved here sp should ends after everything pop out
+	t->sp[  0] = t->pid;     // reserved here sp should ends after everything pop out
 	// Saved in interrupt automatically (CPU context)
 	t->sp[ -1] = 0x01000000; // xPSR
 	t->sp[ -2] = (uint32_t)function; // ReturnAddress
-	t->sp[ -3] = 0x88888888; // $lr
+	t->sp[ -3] = (uint32_t)trap; // $lr
 	t->sp[ -4] = 0x55aa0012; // $r12
 	t->sp[ -5] = 0x55aa0003; // $r3
 	t->sp[ -6] = 0x55aa0002; // $r2
