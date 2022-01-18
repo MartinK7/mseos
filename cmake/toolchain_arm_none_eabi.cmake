@@ -18,7 +18,7 @@ set_property(SOURCE ${SOURCES} PROPERTY LANGUAGE C)
 ################################################################################
 
 list(APPEND CFLAGS
-    -O0 -g3
+    -O3 -g3
 )
 
 include(${PROJECT_SOURCE_DIR}/cmake/toolchain_gcc.cmake)

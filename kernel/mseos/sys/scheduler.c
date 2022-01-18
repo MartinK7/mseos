@@ -10,8 +10,10 @@ typedef struct {
 
 static scheduler_task_t *tasks[CONFIG_SCHEDULER_TASKS_MAX_COUNT] = {0};
 static scheduler_task_t *task_running = NULL;
-static uint32_t ready = 0, pid_counter = 256, task_running_index = 0;
+volatile static uint32_t ready = 0;  // Fix Optimize: This variable is used in assembly, do not remove
+static uint32_t pid_counter = 256, task_running_index = 0;
 
+__attribute__((used)) // Fix Optimize: This function is used in assembly, do not remove
 static void switch_task(void)
 {
 	do {
@@ -26,9 +28,10 @@ static void switch_task(void)
 	} while(1);
 }
 
-__attribute__((naked)) void scheduler_switch_task_irq_cb(void)
+__attribute__((naked))
+void scheduler_switch_task_irq_cb(void)
 {
-	__asm (
+	__asm volatile (
 		// [ASSEMBLY CODE]               [NOTE]              [C equivalent pseudo code]
 		//
 		"cpsid i                  \n" // Disable interrupt   backup_cpu_context();
@@ -47,9 +50,10 @@ __attribute__((naked)) void scheduler_switch_task_irq_cb(void)
 	);
 }
 
-static void __attribute__((naked)) scheduler_start_asm(void)
+__attribute__((naked))
+static void scheduler_start_asm(void)
 {
-	__asm (
+	__asm volatile (
 		// [ASSEMBLY CODE]               [NOTE]              [C equivalent pseudo code]
 		//
 		"cpsid i                  \n" // Disable interrupt
@@ -68,31 +72,8 @@ static void __attribute__((naked)) scheduler_start_asm(void)
 		"cpsie i                  \n" // Enable interrupt
 		"blx   lr                 \n" //                      $lr($r0); ~ function(data);
 		"b     trap               \n" //                      goto trap;
-
-		// Unused debug code
-//		"ldr   r0, gpiog          \n" //                      GPIOG->BSRR = GPIO_BSRR_BS13;
-//		"ldr   r1, gpiogset       \n" //                      ..
-//		"str   r1, [r0]           \n" //                      ..
-//		"gpiog:                   \n" //                      const uint32_t gpiog = 0x40021818UL;
-//		".word 0x40021818UL       \n" //                      ..
-//		"gpiogset:                \n" //                      const uint32_t gpiogset = 0x000002000UL;
-//		".word 0x00002000UL       \n" //                      ..
 	);
 }
-
-#if 0
-SP_OFFSET 4byte align / 8byte align
-0x24      orig_sp     / untouched
-0x20      reserved    / orig_sp
-0x1C      xPSR
-0x18      RetAddr
-0x14      lr
-0x10      r12
-0x0C      r3
-0x08      r2
-0x04      r1
-0x00      r0  (new sp)
-#endif
 
 static void trap(void)
 {
@@ -113,6 +94,7 @@ void scheduler_start(void)
 	// Start task
 	if(task_running != NULL)
 		scheduler_start_asm();
+	// Kernel panic, to process found!
 }
 
 uint32_t scheduler_create_task(void (*function)(void *data), void *data, uint32_t stack_size_words)

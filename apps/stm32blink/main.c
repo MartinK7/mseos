@@ -11,11 +11,11 @@ void _start(void *data)
 			syscall_open();
 		else
 			syscall_close();
-		for(volatile uint32_t k=0;k<100000;++k);// Stupid delay
+		for(volatile uint32_t k=0;k<100000+100000*data_u32;++k);// Stupid delay
 		if(data_u32 == 0)
 			syscall_read();
 		else
 			syscall_write();
-		for(volatile uint32_t k=0;k<100000;++k);// Stupid delay
+		for(volatile uint32_t k=0;k<100000+100000*data_u32;++k);// Stupid delay
 	}
 }

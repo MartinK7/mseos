@@ -2,9 +2,11 @@
 #include "sys/tick.h"
 #include "sys/kheap.h"
 #include "sys/scheduler.h"
+#include "sys/memops.h"
 #include "stm32f4xx.h"
 
-void __attribute__((naked)) irq_systick(void)
+__attribute__((naked))
+void irq_systick(void)
 {
 //	tick_increment_irq_cb(1);
 	asm volatile ("b scheduler_switch_task_irq_cb");
@@ -148,19 +150,20 @@ void platform_init(void)
 //	SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));
 
 	clock_init();
+	asm volatile ("cpsid i");
 	systick_init();
 	rcc_init();
 	gpio_init();
 }
 
 // "FAKESPACE file" This is converted executable from apps/stm32blink/
-volatile const uint32_t __attribute__((aligned(4))) bin2c__stm32blink_elf_bin[] = {
+const uint32_t __attribute__((aligned(4))) bin2c__stm32blink_elf_bin[] = {
 		0x4558454d, 0x00000000, 0x00000011, 0x00000400, 0xb086b580, 0x6078af00, 0x613b687b, 0x617b2300,
-		0x693be02a, 0xd1032b00, 0x681b4b19, 0xe0024798, 0x681b4b18, 0x23004798, 0xe00260fb, 0x330168fb,
-		0x68fb60fb, 0x42934a14, 0x693bd9f8, 0xd1032b00, 0x681b4b12, 0xe0024798, 0x681b4b11, 0x23004798,
-		0xe00260bb, 0x330168bb, 0x68bb60bb, 0x42934a0a, 0x697bd9f8, 0x617b3301, 0x3301693b, 0x697a015b,
-		0xd3ce429a, 0xbf00bf00, 0x46bd3718, 0xbf00bd80, 0x080001ac, 0x080001b0, 0x0001869f, 0x080001b4,
-		0x080001b8, 0xffffffff
+		0x693be032, 0xd1032b00, 0x681b4b1d, 0xe0024798, 0x681b4b1c, 0x23004798, 0xe00260fb, 0x330168fb,
+		0x693b60fb, 0x4a183301, 0xf203fb02, 0x429a68fb, 0x693bd8f4, 0xd1032b00, 0x681b4b14, 0xe0024798,
+		0x681b4b13, 0x23004798, 0xe00260bb, 0x330168bb, 0x693b60bb, 0x4a0c3301, 0xf203fb02, 0x429a68bb,
+		0x697bd8f4, 0x617b3301, 0x3301693b, 0x697a015b, 0xd3c6429a, 0xbf00bf00, 0x46bd3718, 0xbf00bd80,
+		0x080001ac, 0x080001b0, 0x000186a0, 0x080001b4, 0x080001b8, 0xffffffff
 };
 
 

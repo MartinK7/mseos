@@ -26,7 +26,8 @@ _Noreturn void _loop(void)
 
 _Noreturn void _reset(void)
 {
-	uint32_t *src, *dst;
+	// Fix Optimize: volatile -> Do not use memcpy!
+	volatile uint32_t *src, *dst;
 
 	src = &_rodata_end;
 	dst = &_data_start;
