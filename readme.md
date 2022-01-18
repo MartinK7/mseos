@@ -8,9 +8,10 @@ What works now:
 - Copy MEXE app from flash to RAM and execute
 - Simple heap (free not implemented, only alloc)
 - Simple sytem call (temporary solution via syscall table in memory at fixed address (not portable))
+- Task sheduler test, 2 MEXE application running simultaneously!! yey!
 
 Todo:
-- Task sheduler (2 MEXE application should run simultaneously)
+
 
 In future todo:
 - Process system (tasks switching etc.)

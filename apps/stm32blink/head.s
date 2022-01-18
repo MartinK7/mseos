@@ -4,5 +4,5 @@
 	.byte 'X'
 	.byte 'E'
 	.word 0
-	.word main
+	.word _start
 	.word 1024

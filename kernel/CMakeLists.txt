@@ -43,6 +43,7 @@ list(APPEND SOURCES
 	mseos/sys/tick.c
 	mseos/sys/kheap.c
 	mseos/sys/scheduler.c
+	mseos/sys/memops.c
 )
 
 list(APPEND INCLUDES

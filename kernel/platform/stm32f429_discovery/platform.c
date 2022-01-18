@@ -4,10 +4,10 @@
 #include "sys/scheduler.h"
 #include "stm32f4xx.h"
 
-void irq_systick(void)
+void __attribute__((naked)) irq_systick(void)
 {
-	tick_increment_irq_cb(1);
-	scheduler_switch_task_irq_cb();
+//	tick_increment_irq_cb(1);
+	asm volatile ("b scheduler_switch_task_irq_cb");
 }
 
 static uint32_t core_clock_get(void)
@@ -145,7 +145,7 @@ static void gpio_init(void)
 void platform_init(void)
 {
 	// Enable FPU (set CP10 and CP11 Full Access)
-	SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));
+//	SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));
 
 	clock_init();
 	systick_init();
@@ -155,12 +155,12 @@ void platform_init(void)
 
 // "FAKESPACE file" This is converted executable from apps/stm32blink/
 volatile const uint32_t __attribute__((aligned(4))) bin2c__stm32blink_elf_bin[] = {
-		0x4558454d, 0x00000000, 0x00000011, 0x00000400, 0xb086b580, 0x6078af00, 0x687b6039, 0xd1022b00,
-		0x33fff04f, 0x2300e036, 0xe02e617b, 0x681b683b, 0x2b30781b, 0x4b19d103, 0x4798681b, 0x4b18e002,
-		0x4798681b, 0x613b2300, 0x693be002, 0x613b3301, 0x4a14693b, 0xd9f84293, 0x681b683b, 0x2b30781b,
-		0x4b11d103, 0x4798681b, 0x4b10e002, 0x4798681b, 0x60fb2300, 0x68fbe002, 0x60fb3301, 0x4a0968fb,
-		0xd9f84293, 0x3301697b, 0x697b617b, 0x6f80f5b3, 0x2337d3cc, 0x37184618, 0xbd8046bd, 0x080001ac,
-		0x080001b0, 0x0001869f, 0x080001b4, 0x080001b8, 0xffffffff
+		0x4558454d, 0x00000000, 0x00000011, 0x00000400, 0xb086b580, 0x6078af00, 0x613b687b, 0x617b2300,
+		0x693be02a, 0xd1032b00, 0x681b4b18, 0xe0024798, 0x681b4b17, 0x23004798, 0xe00260fb, 0x330168fb,
+		0x68fb60fb, 0x42934a13, 0x693bd9f8, 0xd1032b00, 0x681b4b11, 0xe0024798, 0x681b4b10, 0x23004798,
+		0xe00260bb, 0x330168bb, 0x68bb60bb, 0x42934a09, 0x697bd9f8, 0x617b3301, 0xf5b3697b, 0xd3d06f80,
+		0xbf00bf00, 0x46bd3718, 0xbf00bd80, 0x080001ac, 0x080001b0, 0x0001869f, 0x080001b4, 0x080001b8,
+		0xffffffff
 };
 
 // Dummy
@@ -188,12 +188,9 @@ void platform_register(void)
 			return;
 
 	// Calculate pointer
-	int (*mexe_main)(int argc, char *argv[]) = (void*)((uint8_t*)app1 + app1[2]);
+	void (*mexe1_start)(void *data) = (void*)(((uint8_t*)app1 + app1[2]));
+	void (*mexe2_start)(void *data) = (void*)(((uint8_t*)app2 + app2[2]));
 
-	// Execute
-	// In GDB:
-	// add-symbol-file cmake-build-debug/apps/stm32blink/stm32blink.elf &app1[0]
-	char *arg[1] = {"0"};
-	int retval = mexe_main(1, arg);
-	(void)retval;
+	scheduler_create_task(mexe1_start, (void*)1, 512);
+	scheduler_create_task(mexe2_start, (void*)0, 512);
 }

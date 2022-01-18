@@ -1,24 +1,21 @@
 
-#include <stdint.h>
+#include "sys/types.h"
 #include "sys/syscall.h"
 
-int main(int argc, char *argv[])
+void _start(void *data)
 {
-	if(argc == 0)
-		return -1;
+	uint32_t data_u32 = (uint32_t)data;
 	for(uint32_t i = 0; i < 1024; ++i)
 	{
-		if(argv[0][0] == '0')
+		if(data_u32 == 0)
 			syscall_open();
 		else
 			syscall_close();
 		for(volatile uint32_t k=0;k<100000;++k);// Stupid delay
-		if(argv[0][0] == '0')
+		if(data_u32 == 0)
 			syscall_read();
 		else
 			syscall_write();
 		for(volatile uint32_t k=0;k<100000;++k);// Stupid delay
 	}
-	return 55;
 }
-
