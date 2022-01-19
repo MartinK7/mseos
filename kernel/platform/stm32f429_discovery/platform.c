@@ -160,9 +160,6 @@ void platform_init(void)
 	systick_init();
 	rcc_init();
 	gpio_init();
-
-	// Test what happen if systick interrupt occurs before scheduler is ready? - Fix
-	for(volatile int i=0;i<1000000;++i)asm volatile("nop");
 }
 
 // "FAKESPACE file" This is converted executable from apps/stm32blink/

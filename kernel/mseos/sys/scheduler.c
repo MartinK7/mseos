@@ -35,7 +35,7 @@ void scheduler_switch_task_irq_cb(void)
 		// [ASSEMBLY CODE]               [NOTE]              [C equivalent pseudo code]
 		//
 		"cpsid i                  \n" // Disable interrupt   __irq_disable();
-		"ldr   r0, =suspend_cnt   \n" //                     if(suspend_cnt == 0) return;
+		"ldr   r0, =suspend_cnt   \n" //                     if(suspend_cnt != 0) goto switch_task_exit;
 		"ldr   r1, [r0]           \n" //                     ..
 		"cmp   r1, #0             \n" //                     ..
 		"bne   switch_task_exit   \n" //                     ..
@@ -90,20 +90,20 @@ static void trap(void)
 
 void scheduler_suspend_all_tasks(void)
 {
-	asm volatile("cpsid i"); // Disable interrupt
+	__asm volatile("cpsid i"); // Disable interrupt
 	if(suspend_cnt == -1)
-		asm volatile("b _loop"); // Kernel panic!
+		__asm volatile("b _loop"); // Kernel panic!
 	suspend_cnt += 1;
-	asm volatile("cpsie i"); // Enable interrupt
+	__asm volatile("cpsie i"); // Enable interrupt
 }
 
 void scheduler_resume_all_tasks(void)
 {
-	asm volatile("cpsid i"); // Disable interrupt
+	__asm volatile("cpsid i"); // Disable interrupt
 	if(suspend_cnt == 0)
-		asm volatile("b _loop"); // Kernel panic!
+		__asm volatile("b _loop"); // Kernel panic!
 	suspend_cnt -= 1;
-	asm volatile("cpsie i"); // Enable interrupt
+	__asm volatile("cpsie i"); // Enable interrupt
 }
 
 void scheduler_start(void)
