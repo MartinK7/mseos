@@ -9,6 +9,7 @@ void _start(void *data)
 	{
 		if(data_u32 == 0 && i == 5)
 			syscall_spawn(_start, (void*)1UL, 512);
+
 		if(data_u32 == 0)
 			syscall_open();
 		else

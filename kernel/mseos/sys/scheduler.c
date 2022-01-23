@@ -14,7 +14,7 @@ typedef struct scheduler_task {
 	// Parent process
 	struct scheduler_task *parent_task;
 	// Child processes
-	struct scheduler_task *sub_tasks[CONFIG_SCHEDULER_SUBTASKS_MAX_COUNT];
+	struct scheduler_task *child_tasks[CONFIG_SCHEDULER_CHILDTASKS_MAX_COUNT];
 } scheduler_task_t;
 
 static uint32_t running_task_index = 0;
@@ -26,9 +26,9 @@ static uint32_t pid_counter = 1;
 static void kill(scheduler_task_t *task)
 {
 	// Kill recursive
-	for(uint32_t i = 0; i < CONFIG_SCHEDULER_SUBTASKS_MAX_COUNT; ++i) {
-		if(task->sub_tasks[i] != NULL)
-			kill(task->sub_tasks[i]);
+	for(uint32_t i = 0; i < CONFIG_SCHEDULER_CHILDTASKS_MAX_COUNT; ++i) {
+		if(task->child_tasks[i] != NULL)
+			kill(task->child_tasks[i]);
 	}
 	// Free memory
 	uint32_t index = task->index;
@@ -158,7 +158,7 @@ void scheduler_start(void)
 {
 	// Find first thread and execute it!
 	task_running = NULL;
-	for(uint32_t i = 0; i < CONFIG_SCHEDULER_SUBTASKS_MAX_COUNT; ++i) {
+	for(uint32_t i = 0; i < CONFIG_SCHEDULER_CHILDTASKS_MAX_COUNT; ++i) {
 		if(tasks[i] != NULL) {
 			task_running = tasks[i];
 			running_task_index = i;
@@ -178,7 +178,7 @@ uint32_t scheduler_create_task(void *load_at, void (*function)(void *data), void
 	scheduler_suspend_all_tasks();
 
 	// Find empty task slot
-	uint32_t register_index = -1, register_subindex = -1;
+	uint32_t register_index = -1, child_index = -1;
 	for(uint32_t i = 0; i < CONFIG_SCHEDULER_TASKS_MAX_COUNT; ++i) {
 		if(tasks[i] == NULL) {
 			register_index = i;
@@ -190,15 +190,15 @@ uint32_t scheduler_create_task(void *load_at, void (*function)(void *data), void
 		return 0;
 	}
 
-	// Find empty parent slot
+	// Find empty child slot in parent task
 	if(task_running != NULL) {
-		for(uint32_t i = 0; i < CONFIG_SCHEDULER_SUBTASKS_MAX_COUNT; ++i) {
+		for(uint32_t i = 0; i < CONFIG_SCHEDULER_CHILDTASKS_MAX_COUNT; ++i) {
 			if(tasks[i] == NULL) {
-				register_subindex = i;
+				child_index = i;
 				break;
 			}
 		}
-		if(register_subindex == -1) {
+		if(child_index == -1) {
 			scheduler_resume_all_tasks();
 			return 0;
 		}
@@ -218,12 +218,15 @@ uint32_t scheduler_create_task(void *load_at, void (*function)(void *data), void
 		return 0;
 	}
 
+	uint32_t new_pid = pid_counter++;
+	if(pid_counter == 0)
+			__asm volatile ("b _loop"); // Kernel panic! Out of unique PIDs!
+
 	t->load_at = load_at;
 	t->parent_task = task_running;
 	t->sp = &stack[stack_size_words - 1];
-	t->pid = pid_counter++;
-	if(pid_counter == 0)
-		__asm volatile ("b _loop"); // Kernel panic! Out of unique PIDs!
+	t->pid = new_pid;
+	t->index = register_index;
 
 	// Setup initial stack
 	// Reserved
@@ -251,16 +254,14 @@ uint32_t scheduler_create_task(void *load_at, void (*function)(void *data), void
 
 	// Register task - sub tasks
 	if(t->parent_task != NULL) {
-		t->parent_task->sub_tasks[register_subindex] = t;
+		t->parent_task->child_tasks[child_index] = t;
 	}
 
 	// Register task - main tasks
-	t->index = register_index;
-	uint32_t pid = t->pid;
 	tasks[register_index] = t;
 
 	scheduler_resume_all_tasks();
-	return pid;
+	return new_pid;
 }
 
 error_t scheduler_kill_task(uint32_t pid)

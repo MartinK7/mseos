@@ -15,7 +15,7 @@
 #define CONFIG_SCHEDULER_MAX_ALLOCS 4
 
 // Maximum running tasks per task
-#define CONFIG_SCHEDULER_SUBTASKS_MAX_COUNT 4
+#define CONFIG_SCHEDULER_CHILDTASKS_MAX_COUNT 4
 
 // Minimum heap size for userspace (in words)
 // There will be placed all executables and allocated data
