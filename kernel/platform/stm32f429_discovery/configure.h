@@ -8,11 +8,14 @@
 // Minimum heap size for kernelspace (in words)
 #define CONFIG_KHEAP_SIZE  (64*1024/4)
 
-// Maximum kernel allocations
-//#define CONFIG_KHEAP_MAX_ALLOCS 64
+// Maximum running tasks per task
+#define CONFIG_SCHEDULER_TASKS_MAX_COUNT 64
 
-// Maximum running tasks
-#define CONFIG_SCHEDULER_TASKS_MAX_COUNT 8
+// Maximum allocations per task
+#define CONFIG_SCHEDULER_MAX_ALLOCS 4
+
+// Maximum running tasks per task
+#define CONFIG_SCHEDULER_SUBTASKS_MAX_COUNT 4
 
 // Minimum heap size for userspace (in words)
 // There will be placed all executables and allocated data

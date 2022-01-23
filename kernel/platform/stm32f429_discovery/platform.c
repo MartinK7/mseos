@@ -162,19 +162,19 @@ void platform_init(void)
 	gpio_init();
 
 	// Test what happen if systick interrupt occurs before scheduler is ready? - Fix
-	for(volatile int i=0;i<1000000;++i)asm volatile("nop");
+	for(volatile int i=0;i<1000000;++i) __asm volatile("nop");
 }
 
 // "FAKESPACE file" This is converted executable from apps/stm32blink/
 const uint32_t __attribute__((aligned(4))) bin2c__stm32blink_elf_bin[] = {
-		0x4558454d, 0x00000000, 0x00000011, 0x00000400, 0x47f0e92d, 0x015f1c43, 0xd028b082, 0xf8df4a1b,
-		0xf8df9078, 0x24008078, 0xfb024605, 0x4626fa03, 0xf8d8b305, 0x47983000, 0x9b009600, 0xd906459a,
-		0x33019b00, 0x9b009300, 0xd3f94553, 0xf8d9b1cd, 0x47983000, 0x9b019601, 0xd2054553, 0x33019b01,
-		0x9b019301, 0xd3f94553, 0x42bc3401, 0xb002d1e0, 0x87f0e8bd, 0x681b4b06, 0x95004798, 0x45539b00,
-		0x4b04d3de, 0x4798681b, 0xbf00e7e4, 0x000186a0, 0x080001ac, 0x080001b4, 0x080001b8, 0x080001b0,
-		0xffffffff
+		0x4558454d, 0x00000000, 0x00000011, 0x00000400, 0xb086b580, 0x6078af00, 0x613b687b, 0x617b2300,
+		0x693be03f, 0xd1092b00, 0x2b05697b, 0x4b22d106, 0xf44f681b, 0x21017200, 0x47984820, 0x2b00693b,
+		0x4b1fd103, 0x4798681b, 0x4b1ee002, 0x4798681b, 0x60fb2300, 0x68fbe002, 0x60fb3301, 0x3301693b,
+		0xfb024a19, 0x68fbf203, 0xd8f4429a, 0x2b00693b, 0x4b16d103, 0x4798681b, 0x4b15e002, 0x4798681b,
+		0x60bb2300, 0x68bbe002, 0x60bb3301, 0x3301693b, 0xfb024a0d, 0x68bbf203, 0xd8f4429a, 0x3301697b,
+		0x693b617b, 0x015b3301, 0x429a697a, 0xbf00d3b9, 0x3718bf00, 0xbd8046bd, 0x080001c4, 0x00000011,
+		0x080001ac, 0x080001b0, 0x000186a0, 0x080001b4, 0x080001b8, 0xffffffff
 };
-
 
 // Dummy
 void syscall_open(void){GPIOG->BSRR = GPIO_BSRR_BS13;}
@@ -187,23 +187,23 @@ void syscall_ioctl(void){}
 void platform_register(void)
 {
 	// Load application to RAM from "FAKESPACE filesystem"
-	uint32_t *app1 = kheap_alloc(sizeof(bin2c__stm32blink_elf_bin));
+//	uint32_t *app1 = kheap_alloc(sizeof(bin2c__stm32blink_elf_bin));
 	uint32_t *app2 = kheap_alloc(sizeof(bin2c__stm32blink_elf_bin));
 
 	for(uint32_t i = 0; i < sizeof(bin2c__stm32blink_elf_bin) / sizeof(*bin2c__stm32blink_elf_bin); ++i) {
-		app1[i] = bin2c__stm32blink_elf_bin[i];
+//		app1[i] = bin2c__stm32blink_elf_bin[i];
 		app2[i] = bin2c__stm32blink_elf_bin[i];
 	}
 
 	// Check MEXE
 	for(uint32_t i = 0; i < 4; ++i)
-		if(((uint8_t*)app1)[i] != "MEXE"[i] || ((uint8_t*)app2)[i] != "MEXE"[i])
+		if(/*((uint8_t*)app1)[i] != "MEXE"[i] ||*/ ((uint8_t*)app2)[i] != "MEXE"[i])
 			return;
 
 	// Calculate pointer
-	void (*mexe1_start)(void *data) = (void*)(((uint8_t*)app1 + app1[2]));
+//	void (*mexe1_start)(void *data) = (void*)(((uint8_t*)app1 + app1[2]));
 	void (*mexe2_start)(void *data) = (void*)(((uint8_t*)app2 + app2[2]));
 
-	scheduler_create_task(mexe1_start, (void*)1, 512);
-	scheduler_create_task(mexe2_start, (void*)0, 512);
+//	scheduler_create_task(app1, mexe1_start, (void*)3, 512);
+	scheduler_create_task(app2, mexe2_start, (void*)0, 512);
 }

@@ -114,3 +114,4 @@
 	.word     syscall_write
 	.word     syscall_flush
 	.word     syscall_ioctl
+	.word     syscall_spawn

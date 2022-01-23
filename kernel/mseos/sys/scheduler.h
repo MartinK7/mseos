@@ -11,7 +11,7 @@ void scheduler_suspend_all_tasks(void);
 void scheduler_resume_all_tasks(void);
 
 // Returns PID
-uint32_t scheduler_create_task(void (*function)(void *data), void *data, uint32_t stack_size_words);
+uint32_t scheduler_create_task(void *load_at, void (*function)(void *data), void *data, uint32_t stack_size_words);
 error_t scheduler_kill_task(uint32_t pid);
 
 #endif //MSEOS_SCHEDULER_H

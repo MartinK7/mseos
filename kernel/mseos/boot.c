@@ -14,17 +14,21 @@ extern uint32_t _bss_start;
 extern uint32_t _bss_end;
 
 // Kernel space
-uint32_t __attribute__((section(".kstack"))) _kstack[CONFIG_KSTACK_SIZE];
+__attribute__((section(".kstack")))
+uint32_t _kstack[CONFIG_KSTACK_SIZE];
 
 // Userspace
-uint32_t __attribute__((section(".uheap"))) _uheap[CONFIG_UHEAP_SIZE];
+__attribute__((section(".uheap")))
+uint32_t _uheap[CONFIG_UHEAP_SIZE];
 
-_Noreturn void _loop(void)
+_Noreturn
+void _loop(void)
 {
 	for(;;);
 }
 
-_Noreturn void _reset(void)
+_Noreturn
+void _reset(void)
 {
 	// Fix Optimize: volatile -> Do not use memcpy!
 	volatile uint32_t *src, *dst;

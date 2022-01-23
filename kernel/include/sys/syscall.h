@@ -14,5 +14,6 @@
 #define syscall_write ((void (*)(void))_O(3))
 #define syscall_flush ((void (*)(void))_O(4))
 #define syscall_ioctl ((void (*)(void))_O(5))
+#define syscall_spawn ((void (*)(void (*)(void *), void *, uint32_t))_O(6))
 
 #endif //MSEOS_SYSCALL_H

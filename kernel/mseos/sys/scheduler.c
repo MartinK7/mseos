@@ -2,29 +2,73 @@
 #include "configure.h"
 #include "sys/scheduler.h"
 #include "sys/kheap.h"
+#include "sys/memops.h"
 
-typedef struct {
+typedef struct scheduler_task {
 	uint32_t *sp;
+	void *load_at;
 	uint32_t pid;
+	uint32_t index;
+	uint32_t kill_me_flag;
+//	void *alloc[CONFIG_SCHEDULER_MAX_ALLOCS];
+	// Parent process
+	struct scheduler_task *parent_task;
+	// Child processes
+	struct scheduler_task *sub_tasks[CONFIG_SCHEDULER_SUBTASKS_MAX_COUNT];
 } scheduler_task_t;
 
-static scheduler_task_t *tasks[CONFIG_SCHEDULER_TASKS_MAX_COUNT] = {0};
+static uint32_t running_task_index = 0;
+struct scheduler_task *tasks[CONFIG_SCHEDULER_TASKS_MAX_COUNT] = {0};
 static scheduler_task_t *task_running = NULL;
-volatile static uint32_t suspend_cnt = 1;  // Fix Optimize: This variable is used in assembly, do not remove
-static uint32_t pid_counter = 256, task_running_index = 0;
+volatile static uint32_t suspend_cnt = 1;  // After init, scheduler is suspended
+static uint32_t pid_counter = 1;
+
+static void kill(scheduler_task_t *task)
+{
+	// Kill recursive
+	for(uint32_t i = 0; i < CONFIG_SCHEDULER_SUBTASKS_MAX_COUNT; ++i) {
+		if(task->sub_tasks[i] != NULL)
+			kill(task->sub_tasks[i]);
+	}
+	// Free memory
+	uint32_t index = task->index;
+	kheap_free(task->sp);
+	kheap_free(task);
+	// Unregister
+	if(tasks[index] != task)
+		__asm volatile ("b _loop"); // Kernel panic! Bad index!
+	tasks[index] = NULL;
+}
+
+static int8_t check_kill(scheduler_task_t *task)
+{
+	if(task->parent_task != NULL)
+		if(task->parent_task->kill_me_flag != 0)
+			return 0; // Not killed
+	if(task->kill_me_flag != 0) {
+		kill(task);
+		return 1; // Killed
+	}
+	return 0; // Not killed
+}
 
 __attribute__((used)) // Fix Optimize: This function is used in assembly, do not remove
 static void switch_task(void)
 {
+	uint32_t last_task_index = running_task_index;
+	running_task_index++;
 	do {
-		task_running_index++;
-		if(task_running_index >= CONFIG_SCHEDULER_TASKS_MAX_COUNT)
-			task_running_index = 0;
-		if(tasks[task_running_index] != NULL) {
-			task_running = tasks[task_running_index];
-			task_running->sp[8] &= 0xFFFFFFFCUL;
+		if(last_task_index == running_task_index)
+			__asm volatile ("b _loop"); // Kernel panic! No process found!
+		if(running_task_index >= CONFIG_SCHEDULER_TASKS_MAX_COUNT)
+			running_task_index = 0;
+		if(tasks[running_task_index] != NULL) {
+			if(check_kill(tasks[running_task_index]) != 0)
+				continue;
+			task_running = tasks[running_task_index];
 			return;
 		}
+		running_task_index++;
 	} while(1);
 }
 
@@ -83,37 +127,41 @@ static void scheduler_start_asm(void)
 	);
 }
 
+_Noreturn
 static void trap(void)
 {
+	scheduler_suspend_all_tasks();
+	task_running->kill_me_flag = 1;
+	scheduler_resume_all_tasks();
 	for(;;);
 }
 
 void scheduler_suspend_all_tasks(void)
 {
-	asm volatile("cpsid i"); // Disable interrupt
+	__asm volatile ("cpsid i"); // Disable interrupt
 	if(suspend_cnt == -1)
-		asm volatile("b _loop"); // Kernel panic!
+		__asm volatile ("b _loop"); // Kernel panic!
 	suspend_cnt += 1;
-	asm volatile("cpsie i"); // Enable interrupt
+	__asm volatile ("cpsie i"); // Enable interrupt
 }
 
 void scheduler_resume_all_tasks(void)
 {
-	asm volatile("cpsid i"); // Disable interrupt
+	__asm volatile ("cpsid i"); // Disable interrupt
 	if(suspend_cnt == 0)
-		asm volatile("b _loop"); // Kernel panic!
+		__asm volatile ("b _loop"); // Kernel panic!
 	suspend_cnt -= 1;
-	asm volatile("cpsie i"); // Enable interrupt
+	__asm volatile ("cpsie i"); // Enable interrupt
 }
 
 void scheduler_start(void)
 {
 	// Find first thread and execute it!
 	task_running = NULL;
-	for(uint32_t i = 0;i < CONFIG_SCHEDULER_TASKS_MAX_COUNT; ++i) {
+	for(uint32_t i = 0; i < CONFIG_SCHEDULER_SUBTASKS_MAX_COUNT; ++i) {
 		if(tasks[i] != NULL) {
 			task_running = tasks[i];
-			task_running_index = i;
+			running_task_index = i;
 			break;
 		}
 	}
@@ -121,23 +169,61 @@ void scheduler_start(void)
 	if(task_running != NULL)
 		scheduler_start_asm();
 	// Kernel panic, to process found!
+	__asm volatile ("b _loop"); // Kernel panic!
 }
 
-uint32_t scheduler_create_task(void (*function)(void *data), void *data, uint32_t stack_size_words)
+// Create task under running task (child task)
+uint32_t scheduler_create_task(void *load_at, void (*function)(void *data), void *data, uint32_t stack_size_words)
 {
+	scheduler_suspend_all_tasks();
+
+	// Find empty task slot
+	uint32_t register_index = -1, register_subindex = -1;
+	for(uint32_t i = 0; i < CONFIG_SCHEDULER_TASKS_MAX_COUNT; ++i) {
+		if(tasks[i] == NULL) {
+			register_index = i;
+			break;
+		}
+	}
+	if(register_index == -1) {
+		scheduler_resume_all_tasks();
+		return 0;
+	}
+
+	// Find empty parent slot
+	if(task_running != NULL) {
+		for(uint32_t i = 0; i < CONFIG_SCHEDULER_SUBTASKS_MAX_COUNT; ++i) {
+			if(tasks[i] == NULL) {
+				register_subindex = i;
+				break;
+			}
+		}
+		if(register_subindex == -1) {
+			scheduler_resume_all_tasks();
+			return 0;
+		}
+	}
+
 	uint32_t *stack = kheap_alloc(stack_size_words * sizeof(uint32_t));
 	if(stack == NULL) {
+		scheduler_resume_all_tasks();
 		return 0;
 	}
 
 	scheduler_task_t *t = kheap_alloc(sizeof(scheduler_task_t));
+	memset(t, 0, sizeof(scheduler_task_t));
 	if(t == NULL) {
 		kheap_free(stack);
+		scheduler_resume_all_tasks();
 		return 0;
 	}
 
+	t->load_at = load_at;
+	t->parent_task = task_running;
 	t->sp = &stack[stack_size_words - 1];
 	t->pid = pid_counter++;
+	if(pid_counter == 0)
+		__asm volatile ("b _loop"); // Kernel panic! Out of unique PIDs!
 
 	// Setup initial stack
 	// Reserved
@@ -163,18 +249,30 @@ uint32_t scheduler_create_task(void (*function)(void *data), void *data, uint32_
 
 	t->sp = &t->sp[-16]; // move
 
-	// Register task
-	for(uint32_t i = 0; i < CONFIG_SCHEDULER_TASKS_MAX_COUNT; ++i) {
-		if(tasks[i] == NULL) {
-			tasks[i] = t;
-			return pid_counter++;
-		}
+	// Register task - sub tasks
+	if(t->parent_task != NULL) {
+		t->parent_task->sub_tasks[register_subindex] = t;
 	}
 
-	return 0;
+	// Register task - main tasks
+	t->index = register_index;
+	uint32_t pid = t->pid;
+	tasks[register_index] = t;
+
+	scheduler_resume_all_tasks();
+	return pid;
 }
 
 error_t scheduler_kill_task(uint32_t pid)
 {
 	return ERROR_OUT_OF_MEMORY;
+}
+
+// Export System Calls:
+uint32_t syscall_spawn(void (*function)(void *data), void *data, uint32_t stack_size_words)
+{
+	scheduler_suspend_all_tasks();
+	uint32_t pid = scheduler_create_task(task_running->load_at, (uint32_t)function + task_running->load_at, data, stack_size_words);
+	scheduler_resume_all_tasks();
+	return pid;
 }
