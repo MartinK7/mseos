@@ -79,7 +79,7 @@ void scheduler_switch_task_irq_cb(void)
 		// [ASSEMBLY CODE]               [NOTE]              [C equivalent pseudo code]
 		//
 		"cpsid i                  \n" // Disable interrupt   __irq_disable();
-		"ldr   r0, =suspend_cnt   \n" //                     if(suspend_cnt == 0) return;
+		"ldr   r0, =suspend_cnt   \n" //                     if(suspend_cnt != 0) return;
 		"ldr   r1, [r0]           \n" //                     ..
 		"cmp   r1, #0             \n" //                     ..
 		"bne   switch_task_exit   \n" //                     ..
@@ -266,6 +266,15 @@ uint32_t scheduler_create_task(void *load_at, void (*function)(void *data), void
 
 error_t scheduler_kill_task(uint32_t pid)
 {
+	scheduler_suspend_all_tasks();
+	for(uint32_t i = 0; i < CONFIG_SCHEDULER_TASKS_MAX_COUNT; ++i) {
+		if(tasks[i]->pid == pid) {
+			tasks[i]->kill_me_flag = 1;
+			scheduler_resume_all_tasks();
+			return ERROR_NO_ERROR;
+		}
+	}
+	scheduler_resume_all_tasks();
 	return ERROR_OUT_OF_MEMORY;
 }
 

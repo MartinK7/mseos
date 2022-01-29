@@ -11,11 +11,12 @@ What works now:
 - Task sheduler test, 2 MEXE application running simultaneously!! yey!
 
 Todo:
-
+- Temporary debug system calls: debwrite, debread
+- Rootdir manager + RAMFS -> InitRAMFS (open,write,close,etc.)
+- System call for executing MEXE files
+- Simple shell-terminal program via. UART (creating files, read files, executing file)
 
 In future todo:
-- Process system (tasks switching etc.)
-- Rootdir manager
-- Device driver
-- FS driver
+- Device drivers
 - Some simple libraries
+- True systemcalls (rather then calling functions at fixed address)
